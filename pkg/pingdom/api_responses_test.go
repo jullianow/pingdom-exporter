@@ -12,21 +12,24 @@ func TestErrorError(t *testing.T) {
 }
 
 func TestCheckResponseTagsString(t *testing.T) {
-	checkResponse := CheckResponse{
-		Tags: []CheckResponseTag{
-			{
-				Name:  "apache",
-				Type:  "a",
-				Count: 2,
-			},
-			{
-				Name:  "server",
-				Type:  "a",
-				Count: 2,
-			},
+
+	tags := []CheckResponseTag{
+		{
+			Name:  "apache",
+			Type:  "a",
+			Count: 2,
+		},
+		{
+			Name:  "server",
+			Type:  "a",
+			Count: 2,
 		},
 	}
-	assert.Equal(t, "apache,server", checkResponse.TagsString())
+
+	checkResponse := CheckResponse{
+		Tags: tags,
+	}
+	assert.Equal(t, len(tags), len(checkResponse.TagsObject()))
 }
 
 func TestHasIgnoredTag(t *testing.T) {

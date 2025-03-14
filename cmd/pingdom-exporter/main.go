@@ -33,6 +33,12 @@ var (
 		nil, nil,
 	)
 
+	pingdomCheckTags = prometheus.NewDesc(
+		"pingdom_tags",
+		"The current tags of the check",
+		[]string{"id", "name", "type", "count"}, nil,
+	)
+
 	pingdomRateLimitRemainingRequestsDesc = prometheus.NewDesc(
 		"pingdom_rate_limit_remaining_requests",
 		"Tracks the remaining requests allowed before hitting the short-term or long-term rate limit in the Pingdom API.",
@@ -48,43 +54,43 @@ var (
 	pingdomCheckStatusDesc = prometheus.NewDesc(
 		"pingdom_uptime_status",
 		"The current status of the check (1: up, 0: down)",
-		[]string{"id", "name", "hostname", "status", "resolution", "paused", "tags"}, nil,
+		[]string{"id", "name", "hostname", "status", "resolution", "paused"}, nil,
 	)
 
 	pingdomCheckResponseTimeDesc = prometheus.NewDesc(
 		"pingdom_uptime_response_time_seconds",
 		"The response time of last test, in seconds",
-		[]string{"id", "name", "hostname", "status", "resolution", "paused", "tags"}, nil,
+		[]string{"id", "name", "hostname", "status", "resolution", "paused"}, nil,
 	)
 
 	pingdomOutagesDesc = prometheus.NewDesc(
 		"pingdom_outages_total",
 		"Number of outages within the outage check period",
-		[]string{"id", "name", "hostname", "tags"}, nil,
+		[]string{"id", "name", "hostname"}, nil,
 	)
 
 	pingdomCheckErrorBudgetDesc = prometheus.NewDesc(
 		"pingdom_uptime_slo_error_budget_total_seconds",
 		"Maximum number of allowed downtime, in seconds, according to the uptime SLO",
-		[]string{"id", "name", "hostname", "tags"}, nil,
+		[]string{"id", "name", "hostname"}, nil,
 	)
 
 	pingdomCheckAvailableErrorBudgetDesc = prometheus.NewDesc(
 		"pingdom_uptime_slo_error_budget_available_seconds",
 		"Number of seconds of downtime we can still have without breaking the uptime SLO",
-		[]string{"id", "name", "hostname", "tags"}, nil,
+		[]string{"id", "name", "hostname"}, nil,
 	)
 
 	pingdomDownTimeDesc = prometheus.NewDesc(
 		"pingdom_down_seconds",
 		"Total down time within the outage check period, in seconds",
-		[]string{"id", "name", "hostname", "tags"}, nil,
+		[]string{"id", "name", "hostname"}, nil,
 	)
 
 	pingdomUpTimeDesc = prometheus.NewDesc(
 		"pingdom_up_seconds",
 		"Total up time within the outage check period, in seconds",
-		[]string{"id", "name", "hostname", "tags"}, nil,
+		[]string{"id", "name", "hostname"}, nil,
 	)
 )
 
@@ -102,6 +108,7 @@ type pingdomCollector struct {
 
 func (pc pingdomCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- pingdomUpDesc
+	ch <- pingdomCheckTags
 	ch <- pingdomRateLimitRemainingRequestsDesc
 	ch <- pingdomOutageCheckPeriodDesc
 	ch <- pingdomCheckStatusDesc
@@ -160,7 +167,22 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		id := strconv.Itoa(check.ID)
-		tags := check.TagsString()
+
+		tagsObj := check.TagsObject()
+
+		for _, tagObj := range tagsObj {
+
+			ch <- prometheus.MustNewConstMetric(
+				pingdomCheckTags,
+				prometheus.GaugeValue,
+				float64(1),
+				id,
+				tagObj.Name,
+				tagObj.Type,
+				fmt.Sprint(tagObj.Count),
+			)
+		}
+
 		resolution := strconv.Itoa(check.Resolution)
 
 		var status float64
@@ -181,7 +203,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 			check.Status,
 			resolution,
 			paused,
-			tags,
 		)
 
 		ch <- prometheus.MustNewConstMetric(
@@ -194,7 +215,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 			check.Status,
 			resolution,
 			paused,
-			tags,
 		)
 
 		// Retrieve outages for check
@@ -239,7 +259,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 				id,
 				check.Name,
 				check.Hostname,
-				tags,
 			)
 
 			ch <- prometheus.MustNewConstMetric(
@@ -249,7 +268,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 				id,
 				check.Name,
 				check.Hostname,
-				tags,
 			)
 
 			ch <- prometheus.MustNewConstMetric(
@@ -259,7 +277,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 				id,
 				check.Name,
 				check.Hostname,
-				tags,
 			)
 
 			ch <- prometheus.MustNewConstMetric(
@@ -269,7 +286,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 				id,
 				check.Name,
 				check.Hostname,
-				tags,
 			)
 
 			ch <- prometheus.MustNewConstMetric(
@@ -279,7 +295,6 @@ func (pc pingdomCollector) Collect(ch chan<- prometheus.Metric) {
 				id,
 				check.Name,
 				check.Hostname,
-				tags,
 			)
 		}(check)
 	}
