@@ -3,6 +3,7 @@ BIN=pingdom-exporter
 REPO=jusbrasil
 IMAGE=$(REPO)/$(BIN)
 DOCKER_BIN=docker
+IMAGE_EXTRA_ARGS?=
 
 VERSION=$(shell git describe --tags)
 
@@ -28,7 +29,7 @@ lint:
 # Build the Docker build stage TARGET
 .PHONY: image
 image:
-	$(DOCKER_BIN) build -t $(IMAGE):$(VERSION) .
+	$(DOCKER_BIN) build -t $(IMAGE):$(VERSION) $(IMAGE_EXTRA_ARGS) .
 
 # Push Docker images to the registry
 .PHONY: publish

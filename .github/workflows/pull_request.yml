@@ -22,4 +22,4 @@ jobs:
       run: make test
 
     - name: Build Docker image
-      run: make image REPO=${{GITHUB_REPOSITORY_OWNER}}
+      run: make image REPO=${{GITHUB_REPOSITORY_OWNER}} IMAGE_EXTRA_ARGS='--label "runnumber=${GITHUB_RUN_ID}"'
