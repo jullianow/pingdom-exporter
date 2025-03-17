@@ -3,7 +3,7 @@ name: Check pull request
 on:
   pull_request:
     branches:
-      - master
+      - '*'
 
 jobs:
   build:
@@ -22,4 +22,4 @@ jobs:
       run: make test
 
     - name: Build Docker image
-      run: make image
+      run: make image REPO=${{GITHUB_REPOSITORY_OWNER}}
