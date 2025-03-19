@@ -1,0 +1,16 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: A Helm Chart for pingdom-exporter
+home: https://github.com/jullianow/pingdom-exporter
+keywords:
+  - pingdom
+  - prometheus
+kubeVersion: ">= 1.20.0-0"
+sources:
+  - https://github.com/jullianow/pingdom-exporter
+maintainers:
+  - name: jullianow
+    url: https://github.com/jullianow
+name: pingdom-exporter
+type: application
+version: 1.0.0

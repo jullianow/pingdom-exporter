@@ -1,0 +1,76 @@
+# Default values for pingdom-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Default values for prometheus-pingdom-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: docker.io/jullianow/pingdom-exporter
+  # if not set appVersion field from Chart.yaml is used
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: false
+  labels: {}
+  annotations: {}
+  type: ClusterIP
+  port: 80
+  targetPort: 9158
+
+serviceMonitor:
+  enabled: false
+  additionalLabels: {}
+  namespace:
+  interval:
+  scrapeTimeout:
+  targetLabels: []
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+pingdom:
+  apiToken: "YourPingdomApiToken"
+
+pod:
+  annotations: {}
+    # key: "true"
+    # example: "false"
+
+config:
+  defaultUptimeSLO: 99
+  outageCheckPeriodInDays: 7
+  tags: []
+
+existingSecret:
+  name: "YourPingdomApiToken"
+
+secret:
+  annotations: {}
+    # key: "true"
+    # example: "false"
+
+
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}

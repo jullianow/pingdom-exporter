@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pingdom-exporter.fullname" . }}
+  labels:
+    {{- include "pingdom-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "pingdom-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- if .Values.pod.annotations }}
+      annotations:
+        {{- toYaml .Values.pod.annotations | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "pingdom-exporter.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "pingdom-exporter.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          args:
+            - "-default-uptime-slo"
+            - {{ .Values.config.defaultUptimeSLO | quote }}
+            - "-metrics-path"
+            - "/metrics"
+            - "-outage-check-period"
+            - {{ .Values.config.outageCheckPeriodInDays | quote }}
+            - "-port"
+            - {{ .Values.service.targetPort | quote }}
+            {{- if gt (len .Values.config.tags ) 0 }}
+            - -tags
+            - {{ join "," .Values.config.tags | quote }}
+            {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PINGDOM_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pingdom-exporter.secretName" . }}
+                  key: apiToken
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- if .Values.extraVolumeMounts }}
+          volumeMounts:
+{{ toYaml .Values.extraVolumeMounts | indent 10 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- if .Values.extraVolumes }}
+      volumes:
+{{ toYaml .Values.extraVolumes | indent 8 }}
+    {{- end }}

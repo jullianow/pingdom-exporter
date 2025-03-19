@@ -1,13 +1,19 @@
 GO=CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go
 BIN=pingdom-exporter
-IMAGE=jusbrasil/$(BIN)
+REPO=jusbrasil
+IMAGE=$(REPO)/$(BIN)
 DOCKER_BIN=docker
+IMAGE_EXTRA_ARGS?=
 
-TAG=$(shell git describe --tags)
+VERSION=$(shell git describe --tags)
 
 .PHONY: build
 build:
-	$(GO) build -a --ldflags "-X main.VERSION=$(TAG) -w -extldflags '-static'" -tags netgo -o bin/$(BIN) ./cmd/$(BIN)
+	go mod tidy
+	$(GO) build -a --ldflags "-X main.VERSION=$(VERSION) -w -extldflags '-static'" -tags netgo -o bin/$(BIN) ./cmd/$(BIN)
+
+clean:
+	rm -rf bin/
 
 .PHONY: test
 test:
@@ -23,11 +29,11 @@ lint:
 # Build the Docker build stage TARGET
 .PHONY: image
 image:
-	$(DOCKER_BIN) build -t $(IMAGE):$(TAG) .
+	$(DOCKER_BIN) build -t $(IMAGE):$(VERSION) --build-arg=VERSION=${VERSION} $(IMAGE_EXTRA_ARGS) .
 
 # Push Docker images to the registry
 .PHONY: publish
 publish:
-	$(DOCKER_BIN) push $(IMAGE):$(TAG)
-	$(DOCKER_BIN) tag $(IMAGE):$(TAG) $(IMAGE):latest
+	$(DOCKER_BIN) push $(IMAGE):$(VERSION)
+	$(DOCKER_BIN) tag $(IMAGE):$(VERSION) $(IMAGE):latest
 	$(DOCKER_BIN) push $(IMAGE):latest
